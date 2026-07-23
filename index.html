@@ -418,7 +418,8 @@
       <div class="welcome-eyebrow">Bienvenido(a)</div>
       <div id="welcome-name"></div>
       <div class="welcome-meta">
-        <div class="meta-row"><span class="meta-label">Puesto</span><span id="welcome-posicion"></span></div>
+        <div class="meta-row"><span class="meta-label">Posición</span><span id="welcome-posicion"></span></div>
+        <div class="meta-row"><span class="meta-label">Fecha de alta</span><span id="welcome-fecha"></span></div>
         <div class="meta-row"><span class="meta-label">Distrito</span><span id="welcome-distrito"></span></div>
       </div>
       <button id="welcome-btn" onclick="enterSite()">Ver planes y comisiones</button>
@@ -559,8 +560,9 @@ function showSection(which){
    y funciona con archivos compartidos desde Drive.
 
    Columnas esperadas en la hoja:
-     A = NUMERO EMPLEADO   B = NOMBRE
-     C = DISTRITO          D = POSICION / PUESTO
+     A = NUMERO EMPLEADO    B = NOMBRE DEL EMPLEADO
+     C = POSICION           D = FECHA DE ALTA
+     E = DISTRITO
    ============================================================ */
 const SHEET_ID = '16x2bu-GiMWqAroBRz1airnhkNNI_Ip0R';
 
@@ -581,20 +583,38 @@ window.google.visualization.Query = {
       if(response.status === 'error'){ throw new Error('gviz error'); }
       const rows = response.table.rows;
       const map = {};
+
       function cellVal(cell){
         if(!cell) return '';
         const val = (cell.v != null && cell.v !== '') ? cell.v : cell.f;
         return val != null ? String(val).trim() : '';
       }
+
+      // Las fechas llegan como "Date(2022,0,10)" en .v y ya formateadas en .f,
+      // por eso aquí se prefiere .f y solo se arma la fecha si no viene.
+      function cellFecha(cell){
+        if(!cell) return '';
+        if(cell.f) return String(cell.f).trim();
+        const v = cell.v;
+        if(v == null || v === '') return '';
+        const m = String(v).match(/^Date\((\d+),(\d+),(\d+)/);
+        if(m){
+          const d = new Date(+m[1], +m[2], +m[3]);
+          return d.toLocaleDateString('es-MX', { day:'numeric', month:'long', year:'numeric' });
+        }
+        return String(v).trim();
+      }
+
       rows.forEach(function(row){
         const c = row.c;
         const numero   = cellVal(c[0]);
         const nombre   = cellVal(c[1]);
-        const distrito = cellVal(c[2]);
-        const posicion = cellVal(c[3]);
+        const posicion = cellVal(c[2]);
+        const fecha    = cellFecha(c[3]);
+        const distrito = cellVal(c[4]);
         if(!numero) return;
         if(numero.toUpperCase() === 'VACANTE' || numero.toUpperCase() === 'NUMERO EMPLEADO') return;
-        map[numero] = { nombre: nombre, distrito: distrito, posicion: posicion };
+        map[numero] = { nombre: nombre, posicion: posicion, fecha: fecha, distrito: distrito };
       });
       EMPLEADOS = map;
       setEstado(Object.keys(map).length + ' empleados registrados');
@@ -619,7 +639,7 @@ function loadEmployees(){
   const script = document.createElement('script');
   script.id = 'gvizScript';
   script.src = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID +
-               '/gviz/tq?tqx=out:json&tq=' + encodeURIComponent('select A,B,C,D') +
+               '/gviz/tq?tqx=out:json&tq=' + encodeURIComponent('select A,B,C,D,E') +
                '&headers=1&t=' + Date.now();
   script.onerror = function(){
     loadError = true;
@@ -661,6 +681,7 @@ function checkEmployee(){
     document.getElementById("lock-form").style.display = "none";
     document.getElementById("welcome-name").textContent = toTitleCase(registro.nombre);
     document.getElementById("welcome-posicion").textContent = toTitleCase(registro.posicion);
+    document.getElementById("welcome-fecha").textContent = registro.fecha || "—";
     document.getElementById("welcome-distrito").textContent = toTitleCase(registro.distrito);
     document.getElementById("lock-welcome").style.display = "block";
   } else {
@@ -702,8 +723,9 @@ document.getElementById("emp-input").addEventListener("input", function(){
  Columnas esperadas, con encabezado en la fila 1:
      A = NUMERO EMPLEADO
      B = NOMBRE DEL EMPLEADO
-     C = DISTRITO
-     D = POSICION / PUESTO
+     C = POSICION
+     D = FECHA DE ALTA
+     E = DISTRITO
 
  Las filas con "VACANTE" se ignoran automáticamente.
  Los nombres ya no viven en este archivo: se leen de la hoja en cada
