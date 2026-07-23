@@ -555,14 +555,14 @@ function showSection(which){
 /* ============================================================
    CANDADO DE ACCESO POR NÚMERO DE EMPLEADO
    ------------------------------------------------------------
-   Lee la lista directo de Google Sheets con la API gviz cargada
-   como JSONP (etiqueta <script>), lo que evita el bloqueo de CORS
-   y funciona con archivos compartidos desde Drive.
+   Lee la hoja de Google con la API gviz cargada como JSONP
+   (etiqueta <script>), lo que evita el bloqueo de CORS.
 
-   Columnas esperadas en la hoja:
-     A = NUMERO EMPLEADO    B = NOMBRE DEL EMPLEADO
-     C = POSICION           D = FECHA DE ALTA
-     E = DISTRITO
+   Las columnas se localizan POR EL NOMBRE DEL ENCABEZADO, no por
+   su posición, así que da igual el orden o si se agregan columnas.
+   Encabezados que reconoce (fila 1):
+     NUMERO EMPLEADO · NOMBRE DEL EMPLEADO · POSICION ·
+     FECHA DE ALTA · DISTRITO
    ============================================================ */
 const SHEET_ID = '16x2bu-GiMWqAroBRz1airnhkNNI_Ip0R';
 
@@ -574,15 +574,43 @@ function setEstado(txt){
   if(el) el.textContent = txt;
 }
 
-// Google invoca esta función al terminar de cargar el <script> del gviz.
+function normTxt(s){
+  return String(s || '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')  // quita acentos
+    .toUpperCase().replace(/[^A-Z0-9]/g, '');
+}
+
 window.google = window.google || {};
 window.google.visualization = window.google.visualization || {};
 window.google.visualization.Query = {
   setResponse: function(response){
     try{
-      if(response.status === 'error'){ throw new Error('gviz error'); }
-      const rows = response.table.rows;
-      const map = {};
+      if(!response || response.status === 'error'){
+        const det = response && response.errors && response.errors[0]
+          ? (response.errors[0].detailed_message || response.errors[0].message)
+          : 'respuesta vacía';
+        throw new Error(String(det).replace(/<[^>]*>/g, '').slice(0, 120));
+      }
+
+      const table = response.table;
+      const cols  = table.cols || [];
+      const rows  = table.rows || [];
+
+      // --- Localizar columnas por encabezado ---
+      const idx = { numero:-1, nombre:-1, posicion:-1, fecha:-1, distrito:-1 };
+      cols.forEach(function(col, i){
+        const et = normTxt(col.label);
+        if(!et) return;
+        if(idx.numero   < 0 && et.indexOf('NUMERO')   === 0) idx.numero   = i;
+        else if(idx.nombre   < 0 && et.indexOf('NOMBRE')   === 0) idx.nombre   = i;
+        else if(idx.posicion < 0 && (et.indexOf('POSICION') === 0 || et.indexOf('PUESTO') === 0)) idx.posicion = i;
+        else if(idx.fecha    < 0 && et.indexOf('FECHA')    === 0) idx.fecha    = i;
+        else if(idx.distrito < 0 && et.indexOf('DISTRITO') === 0) idx.distrito = i;
+      });
+
+      // Si la hoja no trae encabezados legibles, se usa el orden por defecto
+      if(idx.numero < 0) idx.numero = 0;
+      if(idx.nombre < 0) idx.nombre = 1;
 
       function cellVal(cell){
         if(!cell) return '';
@@ -590,8 +618,7 @@ window.google.visualization.Query = {
         return val != null ? String(val).trim() : '';
       }
 
-      // Las fechas llegan como "Date(2022,0,10)" en .v y ya formateadas en .f,
-      // por eso aquí se prefiere .f y solo se arma la fecha si no viene.
+      // Las fechas llegan como "Date(2022,0,10)" en .v y formateadas en .f
       function cellFecha(cell){
         if(!cell) return '';
         if(cell.f) return String(cell.f).trim();
@@ -605,23 +632,35 @@ window.google.visualization.Query = {
         return String(v).trim();
       }
 
+      function at(rowCells, i, esFecha){
+        if(i < 0 || !rowCells) return '';
+        return esFecha ? cellFecha(rowCells[i]) : cellVal(rowCells[i]);
+      }
+
+      const map = {};
       rows.forEach(function(row){
-        const c = row.c;
-        const numero   = cellVal(c[0]);
-        const nombre   = cellVal(c[1]);
-        const posicion = cellVal(c[2]);
-        const fecha    = cellFecha(c[3]);
-        const distrito = cellVal(c[4]);
+        const rc = row.c;
+        const numero = at(rc, idx.numero);
         if(!numero) return;
-        if(numero.toUpperCase() === 'VACANTE' || numero.toUpperCase() === 'NUMERO EMPLEADO') return;
-        map[numero] = { nombre: nombre, posicion: posicion, fecha: fecha, distrito: distrito };
+        const nUp = numero.toUpperCase();
+        if(nUp === 'VACANTE' || nUp.indexOf('NUMERO') === 0) return;
+        map[numero.trim()] = {
+          nombre:   at(rc, idx.nombre),
+          posicion: at(rc, idx.posicion),
+          fecha:    at(rc, idx.fecha, true),
+          distrito: at(rc, idx.distrito)
+        };
       });
+
+      if(Object.keys(map).length === 0) throw new Error('la hoja no devolvió filas');
+
       EMPLEADOS = map;
       setEstado(Object.keys(map).length + ' empleados registrados');
       document.getElementById("emp-submit").disabled = false;
+
     } catch(err){
       loadError = true;
-      setEstado('No se pudo verificar el acceso. Intenta de nuevo.');
+      setEstado('No se pudo leer la hoja: ' + err.message);
       document.getElementById("emp-submit").disabled = false;
     }
   }
@@ -636,22 +675,22 @@ function loadEmployees(){
   const oldScript = document.getElementById('gvizScript');
   if(oldScript) oldScript.remove();
 
+  // Sin cláusula "select": se traen todas las columnas y se identifican
+  // por encabezado. Así no falla si la hoja tiene más o menos columnas.
   const script = document.createElement('script');
   script.id = 'gvizScript';
   script.src = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID +
-               '/gviz/tq?tqx=out:json&tq=' + encodeURIComponent('select A,B,C,D,E') +
-               '&headers=1&t=' + Date.now();
+               '/gviz/tq?tqx=out:json&headers=1&t=' + Date.now();
   script.onerror = function(){
     loadError = true;
-    setEstado('No se pudo verificar el acceso. Intenta de nuevo.');
+    setEstado('No se pudo conectar con la hoja. Revisa que esté compartida como "Cualquier persona con el enlace".');
     btn.disabled = false;
   };
   document.body.appendChild(script);
 }
-loadEmployees();
 
 function toTitleCase(str){
-  return String(str).toLowerCase().split(' ').map(function(w){
+  return String(str || '').toLowerCase().split(' ').map(function(w){
     return w.length ? w.charAt(0).toUpperCase() + w.slice(1) : w;
   }).join(' ');
 }
@@ -663,7 +702,7 @@ function checkEmployee(){
 
   if(EMPLEADOS === null){
     errorEl.textContent = loadError
-      ? 'No se pudo cargar la validación. Intenta de nuevo.'
+      ? 'No se pudo cargar la validación. Reintentando…'
       : 'Espera un momento, seguimos cargando…';
     errorEl.style.display = "block";
     if(loadError) loadEmployees();
@@ -680,9 +719,9 @@ function checkEmployee(){
     errorEl.style.display = "none";
     document.getElementById("lock-form").style.display = "none";
     document.getElementById("welcome-name").textContent = toTitleCase(registro.nombre);
-    document.getElementById("welcome-posicion").textContent = toTitleCase(registro.posicion);
+    document.getElementById("welcome-posicion").textContent = toTitleCase(registro.posicion) || "—";
     document.getElementById("welcome-fecha").textContent = registro.fecha || "—";
-    document.getElementById("welcome-distrito").textContent = toTitleCase(registro.distrito);
+    document.getElementById("welcome-distrito").textContent = toTitleCase(registro.distrito) || "—";
     document.getElementById("lock-welcome").style.display = "block";
   } else {
     errorEl.textContent = 'Número de empleado no válido. Intenta de nuevo.';
@@ -703,6 +742,8 @@ document.getElementById("emp-input").addEventListener("input", function(){
   document.getElementById("emp-error").style.display = "none";
   this.style.borderColor = "#e2ddc9";
 });
+
+loadEmployees();
 </script>
 
 </body>
