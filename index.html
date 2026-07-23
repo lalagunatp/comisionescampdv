@@ -338,6 +338,13 @@
     font-weight:600;
     display:none;
   }
+  #build-tag{
+    margin-top:6px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:9.5px;
+    letter-spacing:.06em;
+    color:#c9c9c0;
+  }
   #lock-status{
     margin-top:14px;
     font-family:'IBM Plex Mono', monospace;
@@ -411,6 +418,7 @@
       <button id="emp-submit" onclick="checkEmployee()">Entrar</button>
       <div id="emp-error"></div>
       <div id="lock-status">Cargando datos de acceso…</div>
+      <div id="build-tag">build v4 · encabezados</div>
     </div>
 
     <div id="lock-welcome">
@@ -655,11 +663,14 @@ window.google.visualization.Query = {
       if(Object.keys(map).length === 0) throw new Error('la hoja no devolvió filas');
 
       EMPLEADOS = map;
+      console.log('[candado] columnas detectadas:', idx);
+      console.log('[candado] empleados cargados:', Object.keys(map).length);
       setEstado(Object.keys(map).length + ' empleados registrados');
       document.getElementById("emp-submit").disabled = false;
 
     } catch(err){
       loadError = true;
+      console.error('[candado] fallo al leer la hoja:', err, response);
       setEstado('No se pudo leer la hoja: ' + err.message);
       document.getElementById("emp-submit").disabled = false;
     }
