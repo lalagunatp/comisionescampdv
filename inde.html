@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planes Totalplay + Comisiones</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#faf8f2;
+    --ink:#12130f;
+    --lime:#c9db2b;
+    --magenta:#e6007e;
+    --ledger:#0c3b2e;
+    --ledger-light:#123f31;
+    --gold:#d9a62e;
+    --paper:#ffffff;
+    --gray:#6b7066;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:var(--cream);
+    color:var(--ink);
+    font-family:'Space Grotesk', sans-serif;
+    padding-bottom:60px;
+  }
+  .hero{
+    background:var(--ink);
+    color:var(--cream);
+    padding:56px 24px 40px;
+    position:relative;
+    overflow:hidden;
+  }
+  .hero::before{
+    content:"";
+    position:absolute;
+    top:-40%; right:-10%;
+    width:340px; height:340px;
+    border-radius:50%;
+    background:var(--lime);
+    opacity:.15;
+    filter:blur(10px);
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    font-size:12px;
+    color:var(--lime);
+    margin-bottom:14px;
+  }
+  .hero h1{
+    font-family:'Archivo Black', sans-serif;
+    font-size:clamp(34px, 8vw, 56px);
+    line-height:1.03;
+    max-width:760px;
+  }
+  .hero .accent{ color:var(--lime); }
+  .hero p{
+    margin-top:16px;
+    max-width:520px;
+    color:#cfd2c8;
+    font-size:15px;
+    line-height:1.5;
+  }
+  .toggle{
+    display:flex;
+    max-width:1000px;
+    margin:-26px auto 0;
+    padding:0 24px;
+    position:relative;
+    z-index:2;
+  }
+  .toggle-inner{
+    display:flex;
+    background:var(--paper);
+    border-radius:999px;
+    box-shadow:0 10px 30px rgba(0,0,0,.12);
+    padding:6px;
+    width:100%;
+    max-width:420px;
+  }
+  .toggle button{
+    flex:1;
+    border:none;
+    background:transparent;
+    padding:12px 18px;
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:14px;
+    border-radius:999px;
+    cursor:pointer;
+    color:var(--ink);
+    transition:.2s;
+  }
+  .toggle button.active{
+    background:var(--ink);
+    color:var(--lime);
+  }
+  main{
+    max-width:1000px;
+    margin:44px auto 0;
+    padding:0 24px;
+  }
+  .section-title{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--gray);
+    margin:36px 0 14px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .section-title::after{
+    content:"";
+    flex:1;
+    height:1px;
+    background:#ddd7c6;
+  }
+  .plans{ display:flex; flex-direction:column; gap:16px; }
+  .plan-card{
+    display:grid;
+    grid-template-columns:1fr 220px;
+    background:var(--paper);
+    border-radius:18px;
+    overflow:hidden;
+    box-shadow:0 4px 18px rgba(0,0,0,.05);
+    border:1px solid #ece7d8;
+  }
+  @media (max-width:640px){
+    .plan-card{ grid-template-columns:1fr; }
+  }
+  .plan-info{
+    padding:22px 24px;
+  }
+  .plan-speed{
+    font-family:'Archivo Black', sans-serif;
+    font-size:26px;
+  }
+  .plan-speed .new-tag{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    background:var(--magenta);
+    color:#fff;
+    padding:3px 8px;
+    border-radius:999px;
+    vertical-align:middle;
+    margin-left:8px;
+    letter-spacing:.06em;
+  }
+  .plan-price{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:15px;
+    color:var(--gray);
+    margin-top:4px;
+  }
+  .plan-price b{ color:var(--ink); font-size:17px; }
+  .streaming-tag{
+    display:inline-block;
+    font-size:12.5px;
+    padding:6px 12px;
+    border-radius:8px;
+    font-weight:600;
+  }
+  .tag-none{ background:#f0efe9; color:var(--gray); }
+  .tag-trial{ background:#fff2d6; color:#8a6100; }
+  .tag-life{ background:#e4f2ea; color:var(--ledger); }
+  .tag-life::before{ content:"✦ "; color:var(--gold); }
+
+  .apps-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-top:14px;
+    flex-wrap:wrap;
+  }
+  .apps-empty{
+    font-size:12.5px;
+    color:var(--gray);
+    font-style:italic;
+  }
+  .app-chip{
+    padding:6px 12px;
+    border-radius:8px;
+    color:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:600;
+    font-size:12px;
+    white-space:nowrap;
+    flex-shrink:0;
+  }
+  .ads-badge{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    letter-spacing:.03em;
+    padding:5px 10px;
+    border-radius:999px;
+    font-weight:600;
+    margin-left:2px;
+  }
+  .ads-con{ background:#fde8c8; color:#8a5300; }
+  .ads-sin{ background:#dcefe0; color:var(--ledger); }
+
+  .stub{
+    background:var(--ledger);
+    color:#eef5ee;
+    padding:20px;
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    gap:10px;
+  }
+  .stub::before{
+    content:"";
+    position:absolute;
+    left:0; top:0; bottom:0;
+    width:0;
+    border-left:2px dashed rgba(255,255,255,.25);
+  }
+  @media (max-width:640px){
+    .stub::before{ border-left:none; border-top:2px dashed rgba(255,255,255,.2); top:0; left:0; right:0; bottom:auto; width:auto; height:0;}
+  }
+  .stub-row{ display:flex; justify-content:space-between; align-items:baseline; }
+  .stub-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    color:#9fd6b8;
+  }
+  .stub-amount{
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:600;
+    font-size:19px;
+  }
+  .stub-amount.big{ color:var(--lime); font-size:22px; }
+  .stub-amount.pending{ font-size:14px; color:#7fa595; font-style:italic; font-weight:400; }
+
+  .addons{
+    margin-top:36px;
+    background:var(--paper);
+    border-radius:18px;
+    border:1px solid #ece7d8;
+    padding:22px 24px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:24px;
+  }
+  .addon{ flex:1; min-width:200px; }
+  .addon-name{ font-weight:700; font-size:14.5px; }
+  .addon-comm{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    color:var(--ledger);
+    margin-top:4px;
+  }
+
+  footer{
+    max-width:1000px;
+    margin:40px auto 0;
+    padding:0 24px;
+    font-size:12px;
+    color:var(--gray);
+    line-height:1.6;
+  }
+  footer .flag{ color:var(--magenta); font-weight:700; }
+
+  /* --- Candado de acceso --- */
+  #lock-screen{
+    position:fixed;
+    inset:0;
+    background:var(--ink);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:999;
+    padding:24px;
+  }
+  #lock-box{
+    background:var(--paper);
+    border-radius:20px;
+    padding:40px 32px;
+    max-width:360px;
+    width:100%;
+    text-align:center;
+    box-shadow:0 20px 60px rgba(0,0,0,.4);
+  }
+  #lock-box .lock-icon{
+    font-size:34px;
+    margin-bottom:6px;
+  }
+  #lock-box h2{
+    font-family:'Archivo Black', sans-serif;
+    font-size:20px;
+    margin-bottom:6px;
+  }
+  #lock-box p{
+    font-size:13px;
+    color:var(--gray);
+    margin-bottom:20px;
+  }
+  #emp-input{
+    width:100%;
+    padding:12px 14px;
+    border-radius:10px;
+    border:2px solid #e2ddc9;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:16px;
+    text-align:center;
+    letter-spacing:.05em;
+    outline:none;
+  }
+  #emp-input:focus{ border-color:var(--magenta); }
+  #emp-submit{
+    width:100%;
+    margin-top:12px;
+    padding:12px;
+    border:none;
+    border-radius:10px;
+    background:var(--ink);
+    color:var(--lime);
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:14px;
+    cursor:pointer;
+  }
+  #emp-error{
+    margin-top:12px;
+    font-size:12.5px;
+    color:var(--magenta);
+    font-weight:600;
+    display:none;
+  }
+  #lock-status{
+    margin-top:14px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    letter-spacing:.04em;
+    color:#a8a89e;
+  }
+  #welcome-toast{
+    position:fixed;
+    top:20px; left:50%;
+    transform:translateX(-50%);
+    background:var(--ledger);
+    color:#eef5ee;
+    padding:14px 22px;
+    border-radius:12px;
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:600;
+    font-size:14px;
+    z-index:1000;
+    box-shadow:0 10px 30px rgba(0,0,0,.25);
+    opacity:0;
+    transition:opacity .4s;
+    pointer-events:none;
+  }
+  #welcome-toast.show{ opacity:1; }
+  #app-content{ display:none; }
+</style>
+</head>
+<body>
+
+<div id="lock-screen">
+  <div id="lock-box">
+    <div class="lock-icon">🔒</div>
+    <h2>Acceso restringido</h2>
+    <p>Ingresa tu número de empleado para continuar</p>
+    <input type="text" id="emp-input" placeholder="Número de empleado" inputmode="numeric" maxlength="10">
+    <button id="emp-submit" onclick="checkEmployee()">Entrar</button>
+    <div id="emp-error">Número de empleado no encontrado. Intenta de nuevo.</div>
+    <div id="lock-status">Cargando lista…</div>
+  </div>
+</div>
+
+<div id="welcome-toast"></div>
+
+<div id="app-content">
+
+<div class="hero">
+  <div class="eyebrow">Comunicado interno · Equipo comercial</div>
+  <h1>Cada plan que colocas <span class="accent">se convierte en comisión recurrente.</span></h1>
+  <p>Nuevos planes de Internet e Internet + TV, con la comisión exacta que ganas por cada uno — desde el primer mes y de forma recurrente a partir del tercero.</p>
+</div>
+
+<div class="toggle">
+  <div class="toggle-inner">
+    <button id="btn-internet" class="active" onclick="showSection('internet')">Internet</button>
+    <button id="btn-tv" onclick="showSection('tv')">Internet + TV</button>
+  </div>
+</div>
+
+<main>
+
+  <section id="section-internet">
+    <div class="section-title">Planes de Internet</div>
+    <div class="plans" id="plans-internet"></div>
+  </section>
+
+  <section id="section-tv" style="display:none;">
+    <div class="section-title">Planes de Internet + TV</div>
+    <div class="plans" id="plans-tv"></div>
+  </section>
+
+</main>
+
+<footer>
+  <p>Datos de precio y comisión tomados de la tabla oficial "Totalplay Residencial · Comisiones · Cambaceo y Punto de Venta · Oferta Base".</p>
+  <p style="margin-top:8px;">Comisiones de streaming: Netflix, Universal+ y Apple TV con anuncios; Disney+ se suma a partir de 500 MB; HBO Max a partir de 1,000 MB. A partir de 5,000 MB todas las apps van sin anuncios.</p>
+  <p style="margin-top:8px;"><span class="flag">Precio ajustado:</span> las tarifas al cliente en 250, 350 y 500 MB se tomaron de las imágenes oficiales "Planes Totalplay TV + Internet" y "Planes Totalplay Internet". Las comisiones se dejaron igual, tomadas de la tabla de Cambaceo y Punto de Venta.</p>
+  <p style="margin-top:8px;">El badge "Con anuncios / Sin anuncios" aplica a Netflix, Universal+, Disney+ y HBO Max. Apple TV no tiene versión con anuncios, se incluye igual en ambos casos.</p>
+  <p style="margin-top:8px;">El plan de <b>1,000 MB</b> tiene precio de lista $1,470 / $1,640, con precio promo de $1,000 / $1,200 (requiere modelar la promoción de PRECIO ESPECIAL).</p>
+</footer>
+
+</div>
+
+<script>
+const APPS = {
+  netflix:  { name:"Netflix",    short:"N",   color:"#E50914" },
+  universal:{ name:"Universal+", short:"U+",  color:"#6C2EB5" },
+  appletv:  { name:"Apple TV",   short:"tv",  color:"#111111" },
+  hbomax:   { name:"HBO Max",    short:"Max", color:"#5B21B6" },
+  disney:   { name:"Disney+",    short:"D+",  color:"#0F2FA6" },
+};
+
+const internetPlans = [
+  { speed:"100 MB", isNew:true, price:"$390", streaming:"none", apps:[], ads:null, label:"Sin streaming incluido", c1:"$75", c2:"$150" },
+  { speed:"150 MB", price:"$460", streaming:"trial", apps:["netflix","universal","appletv"], ads:"con", label:"Prueba · 3 meses", c1:"$100", c2:"$250" },
+  { speed:"250 MB", price:"$560", streaming:"trial", apps:["netflix","universal","appletv"], ads:"con", label:"Prueba · 3 meses", c1:"$200", c2:"$400" },
+  { speed:"350 MB", price:"$660", streaming:"life", apps:["netflix","universal","appletv"], ads:"con", label:"De por vida", c1:"$350", c2:"$650" },
+  { speed:"500 MB", price:"$860", streaming:"life", apps:["netflix","universal","appletv","disney"], ads:"con", label:"De por vida", c1:"$500", c2:"$1,300" },
+  { speed:"1,000 MB", price:"$1,000", streaming:"life", apps:["netflix","universal","appletv","disney","hbomax"], ads:"con", label:"De por vida", c1:"$800", c2:"$2,100" },
+  { speed:"5,000 MB", price:"$1,999", streaming:"life", apps:["netflix","universal","appletv","disney","hbomax"], ads:"sin", label:"De por vida", c1:"$1,000", c2:"$2,800" },
+  { speed:"10,000 MB", price:"$2,499", streaming:"life", apps:["netflix","universal","appletv","disney","hbomax"], ads:"sin", label:"De por vida", c1:"$1,300", c2:"$3,500" },
+];
+
+const tvPlans = [
+  { speed:"100 MB + TV", isNew:true, price:"$490", streaming:"none", apps:[], ads:null, label:"Sin streaming incluido", c1:"$150", c2:"$380" },
+  { speed:"150 MB + TV", price:"$599", streaming:"trial", apps:["netflix","universal","appletv"], ads:"con", label:"Prueba · 5 meses", c1:"$200", c2:"$500" },
+  { speed:"250 MB + TV", price:"$699", streaming:"trial", apps:["netflix","universal","appletv"], ads:"con", label:"Prueba · 5 meses", c1:"$400", c2:"$800" },
+  { speed:"350 MB + TV", price:"$799", streaming:"life", apps:["netflix","universal","appletv"], ads:"con", label:"De por vida", c1:"$600", c2:"$1,300" },
+  { speed:"500 MB + TV", price:"$999", streaming:"life", apps:["netflix","universal","appletv","disney"], ads:"con", label:"De por vida", c1:"$750", c2:"$1,600" },
+  { speed:"1,000 MB + TV", price:"$1,200", streaming:"life", apps:["netflix","universal","appletv","disney","hbomax"], ads:"con", label:"De por vida", c1:"$1,000", c2:"$2,900" },
+  { speed:"5,000 MB + TV", price:"$2,499", streaming:"life", apps:["netflix","universal","appletv","disney","hbomax"], ads:"sin", label:"De por vida", c1:"$1,500", c2:"$4,400" },
+  { speed:"10,000 MB + TV", price:"$2,999", streaming:"life", apps:["netflix","universal","appletv","disney","hbomax"], ads:"sin", label:"De por vida", c1:"$1,800", c2:"$5,300" },
+];
+
+function tagClass(streaming){
+  if(streaming==="none") return "tag-none";
+  if(streaming==="trial") return "tag-trial";
+  return "tag-life";
+}
+
+function renderApps(p){
+  if(!p.apps || p.apps.length===0){
+    return `<div class="apps-row apps-empty">Sin apps de streaming</div>`;
+  }
+  const chips = p.apps.map(key => {
+    const a = APPS[key];
+    return `<div class="app-chip" style="background:${a.color}">${a.name}</div>`;
+  }).join("");
+  const adsBadge = p.ads === "con"
+    ? `<span class="ads-badge ads-con">Con anuncios</span>`
+    : `<span class="ads-badge ads-sin">Sin anuncios</span>`;
+  return `<div class="apps-row">${chips}${adsBadge}</div>`;
+}
+
+function renderPlans(list, containerId){
+  const container = document.getElementById(containerId);
+  container.innerHTML = list.map(p => `
+    <div class="plan-card">
+      <div class="plan-info">
+        <div class="plan-speed">${p.speed}${p.isNew ? '<span class="new-tag">NUEVO</span>' : ''}</div>
+        <div class="plan-price">Precio cliente: <b>${p.price}</b>/mes</div>
+        ${renderApps(p)}
+        <div class="streaming-tag ${tagClass(p.streaming)}" style="margin-top:8px;">${p.label}</div>
+      </div>
+      <div class="stub">
+        <div class="stub-row">
+          <span class="stub-label">Primeras 3 mens.</span>
+          <span class="stub-amount ${p.c1 ? '' : 'pending'}">${p.c1 ? p.c1 : 'Por confirmar'}</span>
+        </div>
+        <div class="stub-row">
+          <span class="stub-label">Desde la 3ra (recurrente)</span>
+          <span class="stub-amount ${p.c2 ? 'big' : 'pending'}">${p.c2 ? p.c2 : 'Por confirmar'}</span>
+        </div>
+      </div>
+    </div>
+  `).join("");
+}
+
+renderPlans(internetPlans, "plans-internet");
+renderPlans(tvPlans, "plans-tv");
+
+function showSection(which){
+  document.getElementById("section-internet").style.display = which==="internet" ? "block" : "none";
+  document.getElementById("section-tv").style.display = which==="tv" ? "block" : "none";
+  document.getElementById("btn-internet").classList.toggle("active", which==="internet");
+  document.getElementById("btn-tv").classList.toggle("active", which==="tv");
+}
+
+/* ============================================================
+   CANDADO DE ACCESO POR NÚMERO DE EMPLEADO
+   ------------------------------------------------------------
+   Lee la lista de empleados desde Google Sheets (CSV publicado).
+   Si no logra conectarse, usa la lista de respaldo incluida abajo.
+
+   >>> PEGA AQUÍ LA URL CSV PUBLICADA DE TU HOJA <<<
+   (ver instrucciones al final del archivo)
+   ============================================================ */
+const CSV_URL = ""; // ejemplo: https://docs.google.com/spreadsheets/d/e/2PACX-xxxx/pub?gid=0&single=true&output=csv
+
+const EMPLEADOS_RESPALDO = [["65068028", "Figueroa Wolf Guillermo Eugenio"], ["65076883", "Galvan Rodriguez Alejandro"], ["17117119", "Duarte Perez Sandra"], ["17116766", "Ceniceros Chairez Valeria Estefani"], ["17018542", "Achem Garcia Blanca Aurelia"], ["17104743", "Martinez Avila Martin Fernando"], ["17087924", "Perez Valdivia Lorena"], ["17124142", "Lopez Reyes Jazmin Guadalupe"], ["17120455", "Torres Salazar Almendra"], ["17118529", "Vargas Rodriguez Nayeli Yuridia"], ["17114130", "Martinez Soto Blanca Esmeralda"], ["17122013", "Santana Rodriguez Ivan"], ["17123075", "Rosales Salas Luis Ricardo"], ["17124532", "Frias Salazar Blanca Alejandra"], ["17091931", "Briones Rodriguez Alvaro Andres Eduardo"], ["17020355", "Martinez Martinez Maria Guadalupe"], ["17048060", "Roman Ayoub Isrrael"], ["17093284", "Flores Garcia Faustino"], ["17093799", "Guerra Villanueva Maria De Jesus"], ["17108850", "Reyes Robledo Alejandra"], ["17098265", "Orona Rodriguez Arely Isabel"], ["17028299", "Esquivel Puentes Laura Patricia"], ["1175499", "Campo Regalado Montserrat"], ["17123845", "Bonilla Sepulveda Pablo De Jesus"], ["17122525", "Hernandez Cortinas Norma Margarita"], ["17019799", "Sandoval Canales Martin Rodolfo"], ["15018756", "Fierros Garcia Gabriel"], ["17107245", "Lespron Fraire Christian Javier"], ["17082576", "Moreno Tremillo Maria Guadalupe"], ["17111296", "Dominguez Reyes Belinda Marlene"], ["17102471", "Garcia Vazquez Cynthia Nayeli"], ["17110631", "Rodriguez Perez Sanjuana Yomeli"], ["17123863", "Gonzalez Fraire Rosario Guadalupe"], ["17104570", "Granados Gonzalez Andrea Goretti"], ["15019176", "Hernandez Romero Maria Guadalupe"], ["17040650", "Robledo Molina Dora Elia"], ["17047135", "Michaus De La Cruz Maria Del Rocio"], ["17091021", "Sorto Martinez Claudia Magdalena"], ["17120779", "Pulido Cabello Juan Rafael"], ["17114682", "Segovia Moreno Cristian Jered"], ["17116596", "Carmona Jimenez Jose Israel"], ["17102452", "Viaña Luna Janeri"], ["17110774", "Hernandez Sanchez Alvarez Anahi Consuelo"], ["17123847", "De La Garza Elizalde Juan Carlos"], ["17121509", "Garcia Ortiz Maria Luisa"], ["17123483", "Tena Castro Fernando"], ["17065952", "Hernandez Ochoa Nereida"], ["17124199", "Bañuelos Lopez Hasiry Xiomara"], ["17115562", "Morales Garcia Ivan De Jesus"], ["15018370", "Barajas Canales Julio Cesar"], ["17118190", "Rivera Moran Ricardo"], ["17087910", "Gonzalez Cabral Jose Alberto"], ["17117598", "Torres Torres Daniel Baldemar"], ["17117529", "Ruiz Delgado Blanca Ivonne"], ["17115643", "Correa Acosta Luis Yazid"], ["17121100", "Sifuentes Cisneros Imelda"], ["17121517", "Valles Reyes Martha"], ["17090652", "Palacios Martinez Jose Alfonso"], ["17007325", "Maynez Alvarado Jesus Francisco"], ["17106624", "Reyes Santellano Estefania"], ["17124154", "Bustos De La Rosa Juan Carlos"], ["65049463", "Gallegos Ortiz Carlos Ricardo"], ["15019282", "Isaias Macias Jonathan Salvador"], ["17105690", "Molina Gaytan Perla Karina"], ["17093920", "Galvan Serna Jessica Evelia"], ["17103272", "Alvarado Natera Dammian Zahmir"], ["17018664", "Barron Garcia Martina"], ["17083074", "Gaytan Garcia Ubaldo"], ["17110901", "Galvan Vitela Reyna Judith"], ["17117943", "Macias Valles Nancy Abigail"], ["17121178", "Preciado Mares Getzemany Vedtzabeth"], ["17109882", "Morales Garcia Olivia"], ["17113092", "Ruiz Valtierra Luis Angel"], ["17083337", "Correa Escalera Luis Fernando"], ["17092704", "Cordova Pacheco Jose Luis"], ["17112775", "Velazquez Laguna Sergio"], ["17115214", "Sosa Lugo Nohemi Georgina"], ["17115854", "Villarreal Lopez Norma Alicia"], ["17116296", "Cordova Juarez Cesar Adrian"], ["17116762", "Cedillo Mireles Evelyn Itzel"], ["17123900", "Melendez Aboytes Juan Daniel"], ["17109842", "Ceniceros Guerra Samuel"], ["17123182", "Cruz Mena Vianeth Lucero"], ["17124296", "Martinez Vallejo Nancy Vianey"], ["17061392", "Ontiveros Simental Gloria Idalia"], ["17083297", "Torres Perez Liliana Janeth"], ["17101833", "Mendoza Flores Nayely Alejandra"], ["17084759", "Salinas Franco Alma Dalila"], ["17113850", "Avila Reyes Diana Cristina"], ["17084754", "Hernandez Dominguez Coral Guadalupe"], ["17114159", "Resendiz Ramirez Maria Guadalupe"], ["17114158", "Jimenez Acosta Yoseline Alejandra"], ["17117122", "Alvarez Soto Yuliana Monserrat"], ["17124141", "Pacheco Garcia Anabel"], ["17121875", "Villarreal Perez Ricardo Manuel"], ["17114617", "Resendiz Ramirez Ilse Concepcion"], ["17048818", "De La Cruz Pizaña Susana"], ["17093869", "Gonzalez Guerrero Dalia Patricia"], ["17088909", "Villa Valencia Magda"], ["17069248", "Soriano Martinez Ana Gabriela"], ["17121211", "Buendia Castor Elizabeth"], ["17109428", "Vazquez Gomez Rocio"], ["17124329", "Escandon Ramirez Lluvia Viridiana"], ["17117775", "Martinez Torres Eliana Soledad"], ["17120461", "Martinez Isidoro Yazmin"], ["17123895", "Ramos Ramirez Diana Nayely"], ["17121878", "Resendiz Silva Maria Mayela"], ["17113417", "Sandoval Franco Raquel"], ["17106119", "Fernandez Serna Heriberto"], ["17011041", "Hernandez Ortiz Claudia Mireya"], ["17100750", "Ayabar Sanchez Getsemani"], ["17092433", "Arriola Hernandez Rolando Ariel"], ["17122392", "Zamora Pineda Jorge Manuel"], ["17113066", "Hernandez Ayala Christopher"], ["17117319", "Bahuerachi Cachohuichi Lucrecia"], ["17116118", "Alvarez Martinez Jose Sixto"], ["17117657", "Sales Rendon Laura Gabriela"], ["17123469", "Salas Lopez Wendy Selene"], ["17123061", "Campa Valdez Sara Beatriz"], ["17123659", "Tranquart Cantu Ginette Chantal"], ["65053604", "Villarreal Ramirez Alejandro"], ["17018933", "Esparza Garcia Maria Mayela"], ["1207017", "Delgado Lujan Veronica Anel"], ["1175365", "Carrillo Ibarra Adriana"], ["1175366", "Peña Saldaña Monica Lizzette"], ["1215369", "Quintana Camarena Cinthya Arizbeth"], ["1202004", "Rodriguez Serrano Paola Jaqueline"], ["1175518", "Ortiz Carreon Diana Lizbeth"], ["1182359", "Llamas Bautista Luis Fernando"], ["1182343", "Soriano Martinez Carolina"], ["1203198", "Hernandez Elizalde Abigail"], ["1205831", "Betancourt Del Campo Ofelia Almendra"], ["1182321", "Dovali Muñoz Magdalena"], ["1182340", "Aguirre Barajas Adriana Margarita"], ["17048378", "Lozano Reyes Esteban"], ["1213545", "Diaz Reyes Valeria Azeneth"], ["1175358", "Garcia Perez Lorena"], ["1182324", "Blanco Antunez Norma Patricia"], ["1175407", "Vital Yañez Michel"], ["17055993", "Armenta Carrillo Rene"], ["65061876", "Delgadillo Cano Norma Gabriela"], ["17100772", "Flores Garcia Brenda Karina"], ["17095420", "Sarmiento Espinoza Elvia Leticia"], ["2046145", "Cervantes Davila Alexis Sebastian"], ["17124533", "Cano Villazana Adriana"], ["17121521", "Saldaña Flores Maria De Los Angeles"], ["17117919", "Lavalle Aviles Jennifer"], ["17118069", "Hernandez Hernandez Ruben"], ["17123854", "Briones Ruiz Bernabe"], ["17098028", "Aguilar Morales Brenda Leticia"], ["17058592", "Martinez Olague Lucia"], ["17050254", "Ramirez Guerrero Cecilia"], ["17091593", "Hernandez Ochoa Magaly"], ["17083427", "Lopez Martinez Ma. Terecita De Jesus"], ["2034029", "Contreras Sanchez Jorge Arturo"], ["17116259", "Robles Covarruvias Gladiola"], ["17118651", "Martinez Alvarez Lucero Del Carmen"], ["17120934", "Martinez Cruz Brenda Lizeth"], ["17124202", "Rodriguez Najera Isabel Stehfania"], ["17071664", "Laurence Luna Sergio Armando"], ["17075476", "Saucedo Landeros Yesica"], ["17077729", "Avila Muñoz Lydia"], ["17020236", "Wong Rodriguez Gerardo"], ["17105594", "De Avila Muñoz Carlos Fernando"], ["17107777", "Ornelas Cazares Rebeca"], ["17091117", "Garcia Cordero Sofia Cristina"], ["17090766", "Reyes Villa Frida Sofia"], ["17094415", "Sanchez Dueñas Jorge Eduardo"], ["17113365", "Morillon Holguin Reyna Karina"], ["17093800", "Lopez Gallegos Luis Pablo"], ["17096207", "Molina Gaytan Adilene"], ["17096210", "Carlos Calzada Jorge Alejandro"], ["17091293", "Ortiz Sanchez Mayra Alejandra"], ["17091024", "Galvan Serna Jazmin Guadalupe"], ["17091473", "Fernandez Serna Cinthia Lizbeth"], ["17096209", "Ortiz Castillo Prisciliana"], ["17122489", "Palacios Garay Claudia Elizabeth"], ["17121953", "Hernandez Astorga Brenda Del Carmen"], ["17124611", "Guerrero Martinez Eduardo"]];
+
+let EMPLOYEE_MAP = {};
+let listaCargada = false;
+
+function normalizar(num){
+  return String(num).replace(/[^0-9A-Za-z]/g, "").toUpperCase();
+}
+
+function titulo(nombre){
+  return String(nombre).trim().toLowerCase().split(/\s+/)
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+}
+
+function cargarRespaldo(){
+  EMPLOYEE_MAP = {};
+  EMPLEADOS_RESPALDO.forEach(([num, name]) => {
+    EMPLOYEE_MAP[normalizar(num)] = name;
+  });
+  listaCargada = true;
+}
+
+// Parser CSV sencillo que respeta comillas
+function parseCSV(texto){
+  const filas = [];
+  let fila = [], campo = "", enComillas = false;
+  for(let i = 0; i < texto.length; i++){
+    const c = texto[i];
+    if(enComillas){
+      if(c === '"'){
+        if(texto[i+1] === '"'){ campo += '"'; i++; }
+        else enComillas = false;
+      } else campo += c;
+    } else {
+      if(c === '"') enComillas = true;
+      else if(c === ',') { fila.push(campo); campo = ""; }
+      else if(c === '\n'){ fila.push(campo); filas.push(fila); fila = []; campo = ""; }
+      else if(c !== '\r') campo += c;
+    }
+  }
+  if(campo.length || fila.length){ fila.push(campo); filas.push(fila); }
+  return filas;
+}
+
+async function cargarEmpleados(){
+  const estado = document.getElementById("lock-status");
+  if(!CSV_URL){
+    cargarRespaldo();
+    estado.textContent = "Lista local · " + Object.keys(EMPLOYEE_MAP).length + " empleados";
+    return;
+  }
+  try{
+    const resp = await fetch(CSV_URL, { cache: "no-store" });
+    if(!resp.ok) throw new Error("HTTP " + resp.status);
+    const filas = parseCSV(await resp.text());
+    const mapa = {};
+    filas.forEach((f, i) => {
+      if(i === 0) return; // encabezado
+      const num = (f[0] || "").trim();
+      const nom = (f[1] || "").trim();
+      if(!num || !nom) return;
+      if(num.toUpperCase() === "VACANTE" || nom.toUpperCase() === "VACANTE") return;
+      mapa[normalizar(num)] = titulo(nom);
+    });
+    if(Object.keys(mapa).length === 0) throw new Error("CSV vacío");
+    EMPLOYEE_MAP = mapa;
+    listaCargada = true;
+    estado.textContent = "Lista actualizada · " + Object.keys(EMPLOYEE_MAP).length + " empleados";
+  } catch(err){
+    console.warn("No se pudo leer el CSV, usando respaldo:", err);
+    cargarRespaldo();
+    estado.textContent = "Sin conexión a la hoja · usando lista local";
+  }
+}
+
+function checkEmployee(){
+  const input = document.getElementById("emp-input");
+  const errorEl = document.getElementById("emp-error");
+  const val = normalizar(input.value.trim());
+
+  if(!listaCargada){
+    errorEl.textContent = "Cargando lista de empleados, espera un momento…";
+    errorEl.style.display = "block";
+    return;
+  }
+  if(!val){
+    errorEl.textContent = "Escribe tu número de empleado.";
+    errorEl.style.display = "block";
+    return;
+  }
+
+  if(Object.prototype.hasOwnProperty.call(EMPLOYEE_MAP, val)){
+    const nombre = EMPLOYEE_MAP[val];
+    document.getElementById("lock-screen").style.display = "none";
+    document.getElementById("app-content").style.display = "block";
+    const toast = document.getElementById("welcome-toast");
+    toast.textContent = "👋 Bienvenido(a), " + nombre;
+    toast.classList.add("show");
+    setTimeout(() => toast.classList.remove("show"), 4000);
+  } else {
+    errorEl.textContent = "Número de empleado no encontrado. Verifícalo e intenta de nuevo.";
+    errorEl.style.display = "block";
+    input.style.borderColor = "#e6007e";
+  }
+}
+
+document.getElementById("emp-input").addEventListener("keydown", function(e){
+  if(e.key === "Enter") checkEmployee();
+});
+document.getElementById("emp-input").addEventListener("input", function(){
+  document.getElementById("emp-error").style.display = "none";
+  this.style.borderColor = "#e2ddc9";
+});
+
+cargarEmpleados();
+</script>
+
+</body>
+
+<!--
+====================================================================
+ CÓMO CONECTAR LA HOJA DE GOOGLE (pasos, una sola vez)
+====================================================================
+
+ 1) Tu archivo actual sigue siendo un .xlsx subido a Drive, no una
+    hoja nativa de Google Sheets. Ábrelo y usa:
+        Archivo > Guardar como Hojas de cálculo de Google
+
+ 2) En la copia nueva (ya nativa), ve a:
+        Archivo > Compartir > Publicar en la web
+    Elige la pestaña "Hoja1", formato "Valores separados por comas (.csv)"
+    y presiona Publicar.
+
+ 3) Copia la URL que te da (termina en output=csv) y pégala arriba,
+    en la línea:  const CSV_URL = "";
+
+ 4) Sube este archivo a GitHub. Listo.
+
+ Formato esperado de la hoja: columna A = NUMERO EMPLEADO,
+ columna B = NOMBRE DEL EMPLEADO, con encabezado en la fila 1.
+ Las filas con "VACANTE" se ignoran automáticamente.
+
+ Si CSV_URL se deja vacío, o si la hoja no responde, la página usa
+ la lista de respaldo incorporada en el código.
+====================================================================
+-->
+</html>
